@@ -2,59 +2,41 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
+use App\Http\Resources\LoginResource;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends Controller
 {
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        if (!$request->email) {
+        try {
+            $user = User::where('email', $request->input('email'))->firstOrFail();
+
+            if (!Auth::attempt($request->only('email', 'password'))) {
+                throw new AuthenticationException('Invalid credentials');
+            }
+
+            return LoginResource::make($user);
+        } catch (AuthenticationException $e) {
             return response()->json([
-                'status'  => 422,
-                'message' => 'email is required'
-            ]);
-        }
-        
-        if(strlen($request->email) < 6) {
+                'status'  => Response::HTTP_UNAUTHORIZED,
+                'message' => $e->getMessage(),
+            ], Response::HTTP_UNAUTHORIZED);
+        } catch (ModelNotFoundException $e) {
             return response()->json([
-                'status'  => 422,
-                'message' => 'email is invalid'
-            ]);
-        }
-    
-        if (!$request->password) {
+                'status'  => Response::HTTP_NOT_FOUND,
+                'message' => 'Model not found.',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $e) {
             return response()->json([
-                'status'  => 422,
-                'message' => 'password is required'
-            ]);
+                'status'  => Response::HTTP_INTERNAL_SERVER_ERROR,
+                'message' => 'Internal server error.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        if(strlen($request->password) < 8) {
-            return response()->json([
-                'status'  => 422,
-                'message' => 'password is invalid'
-            ]);
-        }
-    
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return response()->json([
-                'status'  => 404,
-                'message' => 'Model not found.'
-            ]);
-        }
-    
-        if (!Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'status'  => 404,
-                'message' => 'Invalid credentials'
-            ]);
-        }
-        
-        return response()->json([
-            'user' => $user,
-            'token' => $user->createToken('User-Token')->plainTextToken
-        ]);
     }
 }
