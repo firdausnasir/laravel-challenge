@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Interfaces\InternetServiceProviderInterface;
+use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +15,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind(
+            InternetServiceProviderInterface::class,
+            'App\Services\InternetServiceProvider\\'.ucfirst(Request::capture()->segment(2))
+        );
     }
 
     /**
