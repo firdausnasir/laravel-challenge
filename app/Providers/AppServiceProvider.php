@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Interfaces\InternetServiceProviderInterface;
+use App\Services\InternetServiceProvider\InternetServiceProviderInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 

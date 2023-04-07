@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Abstract;
+namespace App\Services\InternetServiceProvider;
 
 class InternetServiceProviderAbstract
 {

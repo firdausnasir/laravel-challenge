@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Interfaces\InternetServiceProviderInterface;
+use App\Services\InternetServiceProvider\InternetServiceProviderInterface;
 use Illuminate\Http\Request;
 
 class InternetServiceProviderController extends Controller
