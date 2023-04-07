@@ -17,16 +17,18 @@ class PostSeeder extends Seeder
      */
     public function run()
     {
-        foreach (User::inRandomOrder()->limit(20)->get() as $user) {
-            Post::factory(100)->for($user, 'author')->create()->each(function (Post $post) use ($user) {
-                $post->tags()->saveMany(Tag::factory()->count(4)->make());
-            });
-        }
+        $maxUser = User::max('id');
 
-        Post::each(function (Post $post) {
-            $post->likes()->saveMany(User::inRandomOrder()->limit(10)->get()->map(function (User $user) {
-                return new Like(['user_id' => $user->id]);
-            }));
-        });
+        Post::factory(100)
+            ->create(['author_id' => rand(1, $maxUser)])
+            ->each(function (Post $post) use ($maxUser) {
+                $likes = [];
+                for ($i = 1; $i <= rand(1, 10); $i++) {
+                    $likes[] = new Like(['user_id' => rand(1, $maxUser)]);
+                }
+
+                $post->tags()->saveMany(Tag::factory()->count(4)->make());
+                $post->likes()->saveMany($likes);
+            });
     }
 }
