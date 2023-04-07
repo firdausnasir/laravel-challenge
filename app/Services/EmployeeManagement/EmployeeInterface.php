@@ -2,9 +2,7 @@
 
 namespace App\Services\EmployeeManagement;
 
-interface Employee
+interface EmployeeInterface
 {
-    public function applyJob();
-    
     public function salary();
 }
