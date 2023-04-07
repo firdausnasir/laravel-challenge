@@ -2,10 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\UserAlreadyLikedPostException;
+use App\Exceptions\UserLikeOwnPostException;
+use App\Http\Requests\PostToggleReactionRequest;
 use App\Http\Resources\PostCollection;
-use App\Models\Like;
 use App\Models\Post;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpFoundation\Response;
 
 class PostController extends Controller
 {
@@ -16,51 +23,62 @@ class PostController extends Controller
         return new PostCollection($posts);
     }
 
-    public function toggleReaction(Request $request)
+    public function toggleReaction(PostToggleReactionRequest $request)
     {
-        $request->validate([
-            'post_id' => 'required|int|exists:posts,id',
-            'like'    => 'required|boolean',
-        ]);
+        try {
+            $data = $request->validated();
+            $post = Post::query()
+                ->with([
+                    'likes' => function (HasMany $query) {
+                        $query->whereBelongsTo(Auth::user());
+                    },
+                ])
+                ->findOrFail(Arr::get($data, 'post_id'));
 
-        $post = Post::find($request->post_id);
-        if(!$post) {
-            return response()->json([
-                'status'  => 404,
-                'message' => 'model not found',
+            // user tries to like his own post
+            throw_if(Gate::denies('like-post', $post), UserLikeOwnPostException::class);
+
+            // user already liked the post
+            if ($post->likes->isNotEmpty()) {
+                // reaction is like the post
+                throw_if(Arr::get($data, 'like', false), UserAlreadyLikedPostException::class);
+
+                $post->likes->map->delete();
+
+                return response()->json([
+                    'status'  => Response::HTTP_OK,
+                    'message' => 'You unlike this post successfully',
+                ]);
+            }
+
+            $post->likes()->create([
+                'user_id' => Auth::id(),
             ]);
-        }
 
-        if($post->user_id == auth()->id()) {
             return response()->json([
-                'status'  => 500,
+                'status'  => Response::HTTP_OK,
+                'message' => 'You like this post successfully',
+            ]);
+        } catch (UserLikeOwnPostException $e) {
+            return response()->json([
+                'status'  => Response::HTTP_INTERNAL_SERVER_ERROR,
                 'message' => 'You cannot like your post',
-            ]);
-        }
-
-        $like = Like::where('post_id', $request->post_id)->where('user_id', auth()->id())->first();
-        if($like && $like->post_id == $request->post_id && $request->like) {
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (UserAlreadyLikedPostException $e) {
             return response()->json([
-                'status'  => 500,
+                'status'  => Response::HTTP_INTERNAL_SERVER_ERROR,
                 'message' => 'You already liked this post',
-            ]);
-        }elseif($like && $like->post_id == $request->post_id && !$request->like) {
-            $like->delete();
-
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (ModelNotFoundException $e) {
             return response()->json([
-                'status'  => 200,
-                'message' => 'You unlike this post successfully',
-            ]);
+                'status'  => Response::HTTP_NOT_FOUND,
+                'message' => 'model not found',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => Response::HTTP_INTERNAL_SERVER_ERROR,
+                'message' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        Like::create([
-            'post_id' => $request->post_id,
-            'user_id' => auth()->id()
-        ]);
-
-        return response()->json([
-            'status'  => 200,
-            'message' => 'You like this post successfully',
-        ]);
     }
 }

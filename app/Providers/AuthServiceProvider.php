@@ -25,6 +25,8 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        Gate::define('like-post', function ($user, $post) {
+            return $user->id !== $post->author_id;
+        });
     }
 }
