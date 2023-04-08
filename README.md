@@ -3,7 +3,7 @@
 #### 1. api/login
 
 *Used at login.*
-<br> 
+<br>
 Do all the tasks below:
 
 - Rewrite the code for request validation
@@ -12,16 +12,16 @@ Do all the tasks below:
 
 #### 2. api/posts
 
-*Fetch posts listing.* 
-<br> 
+*Fetch posts listing.*
+<br>
 Do the following tasks:
 
 - To optimize the query
 - to use Resource
 #### 3. api/posts/reaction
 
-*Used for like or unlike a post after login.* 
-<br> 
+*Used for like or unlike a post after login.*
+<br>
 Do the following tasks:
 
 - Change the coding style for request validation
@@ -45,6 +45,11 @@ Do the following tasks:
 Do the following tasks:
 
 - Fix the wrong usage code
+
+### Bonus
+#### Test Cases
+- Write feature tests for a login API.
+- Write unit tests for MPT Service and Ooredoo Service.
 
 ### ** Notes **
 

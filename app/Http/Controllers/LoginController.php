@@ -15,9 +15,9 @@ class LoginController extends Controller
     public function login(LoginRequest $request)
     {
         try {
-            $user = User::where('email', $request->input('email'))->firstOrFail();
+            $user = User::where('email', $request->validated('email'))->firstOrFail();
 
-            if (!Auth::attempt($request->only('email', 'password'))) {
+            if (!Auth::attempt($request->validated())) {
                 throw new AuthenticationException('Invalid credentials');
             }
 

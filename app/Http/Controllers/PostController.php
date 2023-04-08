@@ -9,7 +9,6 @@ use App\Http\Resources\PostCollection;
 use App\Models\Post;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,14 +25,13 @@ class PostController extends Controller
     public function toggleReaction(PostToggleReactionRequest $request)
     {
         try {
-            $data = $request->validated();
             $post = Post::query()
                 ->with([
                     'likes' => function (HasMany $query) {
                         $query->whereBelongsTo(Auth::user());
                     },
                 ])
-                ->findOrFail(Arr::get($data, 'post_id'));
+                ->findOrFail($request->validated('post_id'));
 
             // user tries to like his own post
             throw_if(Gate::denies('like-post', $post), UserLikeOwnPostException::class);
@@ -41,7 +39,7 @@ class PostController extends Controller
             // user already liked the post
             if ($post->likes->isNotEmpty()) {
                 // reaction is like the post
-                throw_if(Arr::get($data, 'like', false), UserAlreadyLikedPostException::class);
+                throw_if($request->boolean('like'), UserAlreadyLikedPostException::class);
 
                 $post->likes->map->delete();
 

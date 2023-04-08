@@ -4,12 +4,6 @@ namespace App\Services\InternetServiceProvider;
 
 class InternetServiceProviderAbstract
 {
-    // protected string $operator;
-    //
-    // protected int $month;
-    //
-    // protected int $monthlyFees;
-
     public final function __construct()
     {
         if (!isset($this->operator)) {

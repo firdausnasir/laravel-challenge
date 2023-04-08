@@ -20,7 +20,7 @@ class PostSeeder extends Seeder
         $maxUser = User::max('id');
 
         Post::factory(100)
-            ->create(['author_id' => rand(1, $maxUser)])
+            ->create()
             ->each(function (Post $post) use ($maxUser) {
                 $likes = [];
                 for ($i = 1; $i <= rand(1, 10); $i++) {
