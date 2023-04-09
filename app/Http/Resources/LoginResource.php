@@ -9,7 +9,7 @@ class LoginResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'user'  => $this->resource->only('id', 'name', 'email', 'email_verified_at', 'created_at'),
+            'user'  => UserResource::make($this->resource),
             'token' => $this->resource->createToken('authToken')->plainTextToken,
         ];
     }
